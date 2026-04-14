@@ -1,7 +1,7 @@
 <div align="center">
-    <img alt="logo" width="106px" src="`./web-frontend/src/assets/logo.png`">
+    <img alt="logo" width="106px" src="./web-frontend/src/assets/logo.png">
     <h1>Halo - Dishes（家庭私厨）</h1>
-    <p>`一个面向家庭场景的 Halo 点菜插件</p>
+    <p>一个面向家庭场景的 Halo 点菜插件</p>
     <p align="center">
         <a href="//github.com/Avrinbai/halo-plugin-dishes/releases"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/Avrinbai/halo-plugin-dishes?style=flat-square&logo=github" /></a>
         <a href="./LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/Avrinbai/halo-plugin-dishes?style=flat-square" /></a>
