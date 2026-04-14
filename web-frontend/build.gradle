@@ -1,0 +1,25 @@
+plugins {
+    id 'base'
+    id "com.github.node-gradle.node" version "7.1.0"
+}
+
+group 'com.dishes.web-frontend'
+
+tasks.register('pnpmBuild', PnpmTask) {
+    group = 'build'
+    description = 'Build the public dishes SPA (Vite)'
+    args = ['run', 'build']
+    dependsOn tasks.named('pnpmInstall')
+    inputs.dir(layout.projectDirectory.dir('src'))
+    inputs.files(
+        layout.projectDirectory.file('index.html'),
+        layout.projectDirectory.file('vite.config.ts'),
+        layout.projectDirectory.file('tsconfig.json'),
+        layout.projectDirectory.file('package.json'),
+    )
+    outputs.dir(layout.projectDirectory.dir('build/dist'))
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('pnpmBuild')
+}

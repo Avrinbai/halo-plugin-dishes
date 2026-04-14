@@ -1,0 +1,21 @@
+
+apiVersion: plugin.halo.run/v1alpha1
+kind: Plugin
+metadata:
+
+  name: dishes
+spec:
+  enabled: true
+  requires: ">=2.23.0"
+  author:
+    name: bai
+    website: https://avrinbai.cn
+  logo: logo.png
+  homepage: https://github.com/Avrinbai/dishes#readme
+  repo: https://github.com/Avrinbai/halo-plugin-dishes
+  issues: https://github.com/Avrinbai/halo-plugin-dishes/issues
+  displayName: "家庭私厨"
+  description: "基于halo提供的家庭点菜插件。"
+  license:
+    - name: "GPL-3.0"
+      url: "https://github.com/Avrinbai/halo-plugin-dishes/blob/main/LICENSE"

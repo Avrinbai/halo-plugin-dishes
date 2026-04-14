@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      href="/plugins/dishes/assets/dishes-frontend/logo.png"
+      type="image/png"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta th:if="${_csrf != null}" name="dishes-csrf-header" th:content="${_csrf.headerName}" />
+    <meta th:if="${_csrf != null}" name="dishes-csrf-token" th:content="${_csrf.token}" />
+    <link
+      rel="stylesheet"
+      href="https://avrinbai.cn/usr/plugins/FontLibs/static/css/HarmonySanc.css"
+    />
+
+    <link
+      rel="stylesheet"
+      crossorigin
+      href="/plugins/dishes/assets/dishes-frontend/assets/index.css"
+    />
+    <title th:text="${title} ?: '家庭私厨'">家庭私厨</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script th:if="${_csrf != null}">
+      window.__DISHES_CSRF__ = {
+        headerName: '[[${_csrf.headerName}]]',
+        token: '[[${_csrf.token}]]',
+      };
+    </script>
+    <script th:if="${publicBasePath != null}">
+      window.__DISHES_PUBLIC_BASE__ = '[[${publicBasePath}]]';
+    </script>
+    <script th:if="${publicLogoUrl != null}">
+      window.__DISHES_PUBLIC_LOGO__ = '[[${publicLogoUrl}]]';
+    </script>
+    <script type="module" src="/plugins/dishes/assets/dishes-frontend/app.js"></script>
+  </body>
+</html>
