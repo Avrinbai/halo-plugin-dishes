@@ -1,5 +1,5 @@
 <div align="center">
-    <img alt="logo" width="106px" src="./web-frontend/src/assets/logo.png">
+    <img alt="logo" width="106px" src="./web-frontend/src/assets/logo.png" style="border-radius: 16px;">
     <h1>Halo - Dishes（家庭私厨）</h1>
     <p>一个面向家庭场景的 Halo 点菜插件</p>
     <p align="center">
