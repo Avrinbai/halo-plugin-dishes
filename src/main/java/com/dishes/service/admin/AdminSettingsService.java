@@ -28,6 +28,7 @@ public class AdminSettingsService {
         String accessPassword,
         String publicAccessUrl,
         String publicLogoUrl,
+        String publicDomainWhitelist,
         Boolean notifyEnabled,
         String notifyChannel,
         String notifyWebhookUrl,
@@ -36,11 +37,12 @@ public class AdminSettingsService {
     ) {
         var ext = settingsService.getOrInitSettings();
         var spec = ext.getSpec();
-        if (accessMode != null || accessPassword != null || publicAccessUrl != null || publicLogoUrl != null) {
+        if (accessMode != null || accessPassword != null || publicAccessUrl != null || publicLogoUrl != null || publicDomainWhitelist != null) {
             spec.setAccessMode(settingsService.normalizeAccessMode(accessMode));
             spec.setAccessPassword(accessPassword == null ? "" : accessPassword.trim());
             spec.setPublicAccessUrl(settingsService.normalizePublicAccessUrl(publicAccessUrl));
             spec.setPublicLogoUrl(settingsService.normalizeLogoUrl(publicLogoUrl));
+            spec.setPublicDomainWhitelist(settingsService.normalizeDomainWhitelist(publicDomainWhitelist));
             syncSiteRouterCache(spec);
         }
         if (notifyEnabled != null || notifyChannel != null || notifyWebhookUrl != null

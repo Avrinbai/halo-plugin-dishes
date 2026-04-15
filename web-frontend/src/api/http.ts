@@ -1,13 +1,12 @@
 /**
  * 与 Halo 插件后端通信。
- * - 设置 `VITE_API_BASE_URL`（如 https://your-blog.com）时，开发与生产均请求该根地址；
- * - 未设置时请求相对路径（同域）。
+ * API 根固定为「当前页面源」下的相对路径：插件内嵌、或独立前台 + Nginx 反代 `/plugins/dishes/public/` 到 Halo。
+ * 不支持浏览器直连其它域名作为 API（避免跨域与配置分叉）。
  *
- * 约定：插件前台 API 前缀为 `/plugins/dishes/public`（非资源型路径，便于匿名访问授权）。
+ * 约定：插件前台 API 前缀为 `/plugins/dishes/public`（可由 `VITE_API_PREFIX` 覆盖）。
  */
 function apiBase(): string {
-  const raw = import.meta.env.VITE_API_BASE_URL ?? ''
-  return typeof raw === 'string' ? raw.replace(/\/+$/, '') : ''
+  return ''
 }
 
 function apiPrefix(): string {

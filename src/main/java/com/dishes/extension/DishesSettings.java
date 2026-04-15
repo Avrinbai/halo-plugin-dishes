@@ -38,6 +38,9 @@ public class DishesSettings extends AbstractExtension {
         @Schema(description = "前台 Logo（附件库图片 URL，可选）")
         private String publicLogoUrl;
 
+        @Schema(description = "前台域名白名单（逗号或换行分隔，留空表示不限制）")
+        private String publicDomainWhitelist;
+
         @Schema(description = "是否开启通知功能（预留）")
         private Boolean notifyEnabled;
 

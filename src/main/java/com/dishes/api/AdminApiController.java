@@ -105,6 +105,7 @@ public class AdminApiController {
             basic == null ? null : basic.accessPassword(),
             basic == null ? null : basic.publicAccessUrl(),
             basic == null ? null : basic.publicLogoUrl(),
+            basic == null ? null : basic.publicDomainWhitelist(),
             notify == null ? null : notify.enabled(),
             notify == null ? null : notify.channel(),
             notify == null ? null : notify.webhookUrl(),
@@ -137,7 +138,13 @@ public class AdminApiController {
 
     public record SettingsUpdateReq(BasicSettingsReq basic, NotifySettingsReq notifyConfig) {}
 
-    public record BasicSettingsReq(String accessMode, String accessPassword, String publicAccessUrl, String publicLogoUrl) {}
+    public record BasicSettingsReq(
+        String accessMode,
+        String accessPassword,
+        String publicAccessUrl,
+        String publicLogoUrl,
+        String publicDomainWhitelist
+    ) {}
 
     public record NotifySettingsReq(
         Boolean enabled,

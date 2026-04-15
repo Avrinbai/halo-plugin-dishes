@@ -4,6 +4,13 @@ import HomeView from '@/views/HomeView.vue'
 import OrderView from '@/views/OrderView.vue'
 
 function resolvePublicBase(): string {
+  const envBase = import.meta.env.VITE_PUBLIC_BASE
+  if (typeof envBase === 'string' && envBase.trim() !== '') {
+    const raw = envBase.trim()
+    if (!raw || raw === '/') return '/'
+    const base = raw.startsWith('/') ? raw : `/${raw}`
+    return base.endsWith('/') ? base : `${base}/`
+  }
   try {
     const injected = (window as unknown as { __DISHES_PUBLIC_BASE__?: string }).__DISHES_PUBLIC_BASE__
     const raw = (injected ?? '/dishes').trim()

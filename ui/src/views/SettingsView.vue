@@ -14,6 +14,7 @@ type SettingsResp = {
     accessPasswordSet: boolean
     publicAccessUrl: string
     publicLogoUrl: string
+    publicDomainWhitelist: string
     defaultPublicAccessUrl: string
   }
   notify: {
@@ -37,6 +38,7 @@ const form = reactive<SettingsResp>({
     accessPasswordSet: false,
     publicAccessUrl: '',
     publicLogoUrl: '',
+    publicDomainWhitelist: '',
     defaultPublicAccessUrl: '/dishes',
   },
   notify: {
@@ -108,6 +110,7 @@ async function load() {
     form.basic.defaultPublicAccessUrl = data.basic?.defaultPublicAccessUrl ?? '/dishes'
     form.basic.publicAccessUrl = data.basic?.publicAccessUrl || form.basic.defaultPublicAccessUrl
     form.basic.publicLogoUrl = data.basic?.publicLogoUrl ?? ''
+    form.basic.publicDomainWhitelist = data.basic?.publicDomainWhitelist ?? ''
     form.notify.enabled = !!data.notify?.enabled
     form.notify.channel = data.notify?.channel ?? ''
     form.notify.webhookUrl = data.notify?.webhookUrl ?? ''
@@ -138,6 +141,7 @@ async function save() {
         accessPassword: form.basic.accessPassword,
         publicAccessUrl: form.basic.publicAccessUrl,
         publicLogoUrl: form.basic.publicLogoUrl,
+        publicDomainWhitelist: form.basic.publicDomainWhitelist,
       },
       notifyConfig: {
         enabled: form.notify.enabled,
@@ -259,6 +263,19 @@ onMounted(() => {
                 </div>
               </div>
               <p class="settings-hint">未设置时前台将继续使用默认 PNG 图标。</p>
+            </div>
+
+            <div class="settings-field">
+              <div class="settings-field-label">前台域名白名单</div>
+              <textarea
+                v-model="form.basic.publicDomainWhitelist"
+                class="settings-textarea"
+                rows="4"
+                placeholder="每行一个域名，如：menu.example.com"
+              />
+              <p class="settings-hint">
+                留空表示不限制来源；填写一级域名 其 二级域名也允许请求。
+              </p>
             </div>
           </div>
 
@@ -445,6 +462,15 @@ onMounted(() => {
   border-radius: 6px;
   padding: 0 0.75rem;
   font-size: 0.875rem;
+}
+
+.settings-textarea {
+  border: 1px solid rgb(212 212 216);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  resize: vertical;
+  min-height: 88px;
 }
 
 .settings-hint {

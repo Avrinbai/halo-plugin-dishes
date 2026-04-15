@@ -111,6 +111,19 @@ public class DishesSettingsService {
         return raw == null ? "" : raw.trim();
     }
 
+    public String normalizeDomainWhitelist(String raw) {
+        if (raw == null) return "";
+        return raw
+            .replace("\r\n", "\n")
+            .replace(",", "\n")
+            .lines()
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .distinct()
+            .reduce((a, b) -> a + "\n" + b)
+            .orElse("");
+    }
+
     public String normalizePublicPathForPage(String raw) {
         var normalized = normalizePublicAccessUrl(raw);
         return normalized.isBlank() ? DEFAULT_PUBLIC_PATH : normalized;
@@ -127,6 +140,7 @@ public class DishesSettingsService {
         spec.setAccessPassword("");
         spec.setPublicAccessUrl("");
         spec.setPublicLogoUrl("");
+        spec.setPublicDomainWhitelist("");
         spec.setNotifyEnabled(false);
         spec.setNotifyChannel("");
         spec.setNotifyWebhookUrl("");

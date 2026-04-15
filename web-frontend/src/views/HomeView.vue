@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { apiGet, getApiErrorMessage } from '@/api/http'
+import { resolveMediaUrl } from '@/utils/mediaUrl'
 import HomeOrderFab from '@/components/HomeOrderFab.vue'
 import headerLogoUrl from '@/assets/logo.png'
 
@@ -101,18 +102,18 @@ interface ComboData {
 
 type PeriodCode = 'breakfast' | 'lunch' | 'dinner'
 
-function resolveHeaderAvatarUrl() {
+function resolveHeaderAvatarUrlRaw() {
   const fallback = headerLogoUrl
   try {
     const customLogo = (window as unknown as { __DISHES_PUBLIC_LOGO__?: string }).__DISHES_PUBLIC_LOGO__
     const v = (customLogo ?? '').trim()
-    return v || fallback
+    return v || String(fallback)
   } catch {
-    return fallback
+    return String(fallback)
   }
 }
 
-const headerAvatarUrl = resolveHeaderAvatarUrl()
+const headerAvatarUrl = computed(() => resolveMediaUrl(resolveHeaderAvatarUrlRaw()))
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -827,7 +828,7 @@ onUnmounted(() => {
                         >
                           <img
                             v-if="it.dish.image_url"
-                            :src="it.dish.image_url"
+                            :src="resolveMediaUrl(it.dish.image_url)"
                             :alt="it.dish.name"
                             class="h-full w-full object-cover"
                             loading="lazy"
@@ -987,7 +988,7 @@ onUnmounted(() => {
                             >
                               <img
                                 v-if="d.image_url"
-                                :src="d.image_url"
+                                :src="resolveMediaUrl(d.image_url)"
                                 :alt="d.name"
                                 class="h-full w-full object-cover"
                                 loading="lazy"
@@ -1186,7 +1187,7 @@ onUnmounted(() => {
                           >
                             <img
                               v-if="line.image_url"
-                              :src="line.image_url"
+                              :src="resolveMediaUrl(line.image_url)"
                               :alt="line.name"
                               class="h-full w-full object-cover"
                               loading="lazy"

@@ -58,6 +58,7 @@ public final class ApiPayloads {
                 "accessPasswordSet", spec.getAccessPassword() != null && !spec.getAccessPassword().isBlank(),
                 "publicAccessUrl", spec.getPublicAccessUrl() == null ? "" : spec.getPublicAccessUrl(),
                 "publicLogoUrl", spec.getPublicLogoUrl() == null ? "" : spec.getPublicLogoUrl(),
+                "publicDomainWhitelist", spec.getPublicDomainWhitelist() == null ? "" : spec.getPublicDomainWhitelist(),
                 "defaultPublicAccessUrl", "/dishes"
             ),
             "notify", Map.of(

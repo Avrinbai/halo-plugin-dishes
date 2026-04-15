@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, watch } from 'vue'
 
+import { resolveMediaUrl } from '@/utils/mediaUrl'
+
 export interface SubmitModalDishLite {
   id: number
   name: string
@@ -206,7 +208,7 @@ onUnmounted(() => {
                       >
                         <img
                           v-if="l.dish.image_url"
-                          :src="l.dish.image_url"
+                          :src="resolveMediaUrl(l.dish.image_url)"
                           :alt="l.dish.name"
                           class="h-full w-full object-cover"
                           loading="lazy"
