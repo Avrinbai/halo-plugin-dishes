@@ -266,7 +266,7 @@ onMounted(() => {
             </div>
 
             <div class="settings-field">
-              <div class="settings-field-label">前台域名白名单</div>
+              <div class="settings-field-label">前台独立域名白名单</div>
               <textarea
                 v-model="form.basic.publicDomainWhitelist"
                 class="settings-textarea"

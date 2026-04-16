@@ -11,15 +11,18 @@ function resolvePublicBase(): string {
     const base = raw.startsWith('/') ? raw : `/${raw}`
     return base.endsWith('/') ? base : `${base}/`
   }
+  // 未配置 VITE_PUBLIC_BASE：插件内嵌页由 Halo 注入 __DISHES_PUBLIC_BASE__；独立构建的 index.html 无注入，应用站点根 /
   try {
     const injected = (window as unknown as { __DISHES_PUBLIC_BASE__?: string }).__DISHES_PUBLIC_BASE__
-    const raw = (injected ?? '/dishes').trim()
-    if (!raw) return '/dishes/'
-    const base = raw.startsWith('/') ? raw : `/${raw}`
-    return base.endsWith('/') ? base : `${base}/`
+    const s = injected == null ? '' : String(injected).trim()
+    if (s !== '') {
+      const base = s.startsWith('/') ? s : `/${s}`
+      return base.endsWith('/') ? base : `${base}/`
+    }
   } catch {
-    return '/dishes/'
+    // ignore
   }
+  return '/'
 }
 
 const router = createRouter({

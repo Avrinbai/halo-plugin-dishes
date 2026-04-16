@@ -48,6 +48,10 @@ export default defineConfig(({ mode }) => {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
         },
+        '/plugins/dishes/public': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+        },
       },
     },
   }

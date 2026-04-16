@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping(path = {"/apis/plugins/dishes/public", "/plugins/dishes/public"}, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -103,8 +106,24 @@ public class PublicApiController {
         return Envelope.ok(publicFacadeService.accessStatus(token));
     }
 
-    public record PasswordVerifyReq(String password) {}
+    @GetMapping("/csrf-metadata")
+    @SuppressWarnings("unchecked")
+    public Mono<Envelope<Map<String, String>>> csrfMetadata(ServerWebExchange exchange) {
+        publicDomainWhitelistService.ensureAllowed(exchange.getRequest());
+        var attr = exchange.getAttribute(CsrfToken.class.getName());
+        if (!(attr instanceof Mono<?>)) {
+            return Mono.just(Envelope.ok(Map.of()));
+        }
+        return ((Mono<CsrfToken>) attr)
+            .map(token -> Envelope.ok(Map.of(
+                "headerName", token.getHeaderName(),
+                "token", token.getToken()
+            )))
+            .defaultIfEmpty(Envelope.ok(Map.of()));
+    }
 
+    public record PasswordVerifyReq(String password) {}
+ 
     @PostMapping("/access/password-verify")
     public Envelope<Map<String, Object>> verifyPassword(@RequestBody PasswordVerifyReq req, ServerHttpRequest request) {
         publicDomainWhitelistService.ensureAllowed(request);

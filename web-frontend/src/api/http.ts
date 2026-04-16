@@ -1,10 +1,4 @@
-/**
- * 与 Halo 插件后端通信。
- * API 根固定为「当前页面源」下的相对路径：插件内嵌、或独立前台 + Nginx 反代 `/plugins/dishes/public/` 到 Halo。
- * 不支持浏览器直连其它域名作为 API（避免跨域与配置分叉）。
- *
- * 约定：插件前台 API 前缀为 `/plugins/dishes/public`（可由 `VITE_API_PREFIX` 覆盖）。
- */
+
 function apiBase(): string {
   return ''
 }
@@ -94,11 +88,72 @@ function resolveCsrf(): { headerName: string; token: string } | null {
   const t2 = readMeta('dishes-csrf-token')
   if (h2 && t2) return { headerName: h2, token: t2 }
 
+  try {
+    const c = csrfMetaCache
+    const hn = (c?.headerName ?? '').trim()
+    const tk = (c?.token ?? '').trim()
+    if (hn && tk) return { headerName: hn, token: tk }
+  } catch {
+    // ignore
+  }
+
   const token =
     readCookie('XSRF-TOKEN') || readCookie('CSRF-TOKEN') || readCookie('X-CSRF-TOKEN')
   if (token) return { headerName: 'X-XSRF-TOKEN', token }
 
   return null
+}
+
+/** 由 GET /csrf-metadata 写入；不依赖可读 Cookie（XSRF-TOKEN 可能为 HttpOnly）。 */
+let csrfMetaCache: { headerName: string; token: string } | null = null
+
+async function loadCsrfMetadata(): Promise<void> {
+  const base = apiBase()
+  const prefix = apiPrefix()
+  const res = await fetch(`${base}${prefix}/csrf-metadata`, {
+    method: 'GET',
+    headers: withAccessHeaders({ Accept: 'application/json' }),
+    credentials: 'include',
+  })
+  const text = await res.text()
+  let json: unknown
+  try {
+    json = JSON.parse(text) as unknown
+  } catch {
+    return
+  }
+  if (typeof json !== 'object' || json === null || (json as { ok?: unknown }).ok !== true) return
+  const data = (json as { data?: unknown }).data
+  if (typeof data !== 'object' || data === null) return
+  const headerName = String((data as { headerName?: unknown }).headerName ?? '').trim()
+  const token = String((data as { token?: unknown }).token ?? '').trim()
+  if (headerName && token) csrfMetaCache = { headerName, token }
+}
+
+/** 独立部署：拉取 CSRF 后再 POST，避免 Spring Security 返回 403 text/plain。 */
+let csrfWarmChain: Promise<void> | null = null
+
+async function ensureCsrfForPost(): Promise<void> {
+  if (resolveCsrf()) return
+  if (!csrfWarmChain) {
+    csrfWarmChain = (async () => {
+      await loadCsrfMetadata()
+      if (resolveCsrf()) return
+      const base = apiBase()
+      const prefix = apiPrefix()
+      await fetch(`${base}${prefix}/access/status`, {
+        method: 'GET',
+        headers: withAccessHeaders({ Accept: 'application/json' }),
+        credentials: 'include',
+      })
+    })()
+  }
+  try {
+    await csrfWarmChain
+  } catch (e) {
+    csrfWarmChain = null
+    throw e
+  }
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
@@ -120,6 +175,15 @@ export async function apiGet<T>(path: string): Promise<T> {
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const base = apiBase()
   const prefix = apiPrefix()
+  if (!resolveCsrf()) {
+    await ensureCsrfForPost()
+  }
+  if (!resolveCsrf()) {
+    throw new ApiError(
+      '无法获取 CSRF：请允许本站 Cookie，并确保请求使用 credentials: include（不要用 omit）',
+      'CSRF_MISSING',
+    )
+  }
   const headers: HeadersInit = withAccessHeaders({
     Accept: 'application/json',
     'Content-Type': 'application/json',

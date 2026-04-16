@@ -103,7 +103,7 @@ VITE_ASSET_BASE=
 #### 前提（API）
 
 - 浏览器只访问**前台域名**。
-- 路径 `/plugins/dishes/public/` 必须由 **Nginx（或同类网关）反代到 Halo**。
+- 路径 **`/plugins/dishes/public/`**（前台默认）必须由 **Nginx 反代到 Halo**。
 
 #### 域名示例
 
@@ -130,7 +130,7 @@ VITE_MEDIA_ORIGIN=https://blog.example.com
 
 #### 其它说明
 
-- Nginx 反代示例见下文「Nginx 参考配置」（**仅** API `/plugins/dishes/public/`；附件通过 `VITE_MEDIA_ORIGIN` 指到主站）。
+- Nginx 反代示例见下文「Nginx 参考配置」（API **`/plugins/dishes/public/`**；附件通过 `VITE_MEDIA_ORIGIN` 指到主站）。
 - 插件后台「前台域名白名单」仍用于服务端校验请求来源。
 
 ### 场景 C：子路径部署（如 `https://menu.example.com/dishes/`）
@@ -182,7 +182,9 @@ pnpm build
 
 ## Nginx 参考配置
 
-独立前台部署**必须**通过反向代理：浏览器只访问前台域名，由 Nginx 将 `/plugins/dishes/public/` 转发到 Halo，避免跨域与 Cookie 问题。
+独立前台部署**必须**通过反向代理：浏览器只访问前台域名，由 Nginx 将 **`/plugins/dishes/public/`** 转发到 Halo，避免跨域与 Cookie 问题。
+
+默认走 **`/plugins/dishes/public/...`**（与匿名 RBAC 一致）。独立静态页无 Thymeleaf CSRF 时，代码会在 POST 前先 GET **`/access/status`** 以触发 `XSRF-TOKEN`；若仍 403，请确认反代未丢弃 `Set-Cookie`。
 
 ### 独立域名（根路径）示例
 
@@ -223,9 +225,9 @@ server {
 ## 验证与排错
 
 - 页面静态资源可正常加载（无 404）。
-- 浏览器网络面板中，API 请求路径为 `/plugins/dishes/public/...`。
-- API 请求返回 JSON（不是 HTML 登录页）。
-- 若出现跨域报错，说明 API 仍指向了 Halo 绝对地址或未配置反代；应确保请求 URL 为前台域名下的 `/plugins/dishes/public/...`。
+- 浏览器网络面板中，API 请求路径为 `/plugins/dishes/public/...`（默认）。
+- API 请求返回 JSON（不是 HTML 登录页）。若出现 **`/login?authentication_required` 且 404**，多为误将 API 指到 **`/apis/plugins/...`** 且被 Halo 要求登录；请改回默认前缀并反代 **`/plugins/dishes/public/`**。若 POST **403**，检查 CSRF Cookie 是否被反代/浏览器拦截。
+- 若出现跨域报错，说明 API 仍指向了 Halo 绝对地址或未配置反代；应确保请求 URL 为前台域名下的上述路径。
 - 若你希望 API 走自定义前缀（如 `/dishes-api/`），可设置 `VITE_API_PREFIX` 并同步修改 Nginx `location`。
 
 ## 许可证
