@@ -24,10 +24,7 @@
 | [功能亮点](#功能亮点) | 能力列表 |
 | [预览图](#预览图) | 界面截图 |
 | [快速开始](#快速开始) | 安装、配置、初始化、使用 |
-| [部署指南](#部署指南) | 插件内嵌 / 独立域名 / 子路径 |
-| [编译与构建](#编译与构建) | Gradle 插件包、单独构建前台 |
-| [Nginx 参考配置](#nginx-参考配置) | 独立前台时 API 反代示例 |
-| [验证与排错](#验证与排错) | 上线自检与常见问题 |
+| [独立部署与开发文档](#独立部署与开发文档) | 独立部署、编译构建、Nginx、排错（外链） |
 | [许可证](#许可证) | 协议 |
 
 ## 功能亮点
@@ -39,7 +36,7 @@
 - 访问控制（公开/密码）
 - 消息通知（支持企业微信 webhook 推送）
 - 前台展示文案（浏览器标签标题、顶栏主标题与副标题，在插件设置「基础设置」中配置）
-- 后台数据备份（ZIP 导出与覆盖式导入，见「更新日志」说明）
+- 后台数据备份（ZIP 导出与覆盖式导入）
 
 ## 管理端预览
 
@@ -87,150 +84,11 @@
 
 ---
 
-## 部署指南
+## 独立部署与开发文档
 
-按前台托管方式选择下面一种即可。
+独立部署（同域 / 独立域名 / 子路径）、环境变量、编译构建、Nginx、上线验证与排错等说明，请查阅：
 
-### 场景 A：作为 Halo 插件前台（同域）
-
-- **适用**：前台静态资源由 Halo 插件托管，访问与 Halo 同域。
-- **配置**：`web-frontend/.env.production` 保持默认（如下）。
-
-```env
-VITE_ASSET_BASE=
-```
-
-### 场景 B：独立域名部署（前台在 A，Halo 在 B）
-
-#### 前提（API）
-
-- 浏览器只访问**前台域名**。
-- 路径 **`/plugins/dishes/public/`**（前台默认）必须由 **Nginx 反代到 Halo**。
-
-#### 域名示例
-
-- 前台：`https://menu.example.com`
-- Halo：`https://blog.example.com`
-
-#### 前端环境变量
-
-构建打包时请把示例中的 `blog.example.com` 换成你的 Halo 主站根地址（无尾部斜杠）。
-
-```env
-VITE_ASSET_BASE=/
-
-# 前台挂在域名根目录（打开即首页）时填 /
-VITE_PUBLIC_BASE=/
-
-# 独立站必填：Halo 主站根地址（无尾部斜杠），将接口返回的 /upload/... 解析到主站，避免菜品图片资源 404
-VITE_MEDIA_ORIGIN=https://blog.example.com
-```
-
-#### 附件图片 `/upload/`
-
-接口返回的菜品图等常为站点相对路径 `/upload/...`。独立部署时若仍用当前前台域名请求，会落在无文件的站点上。**请统一在 `web-frontend/.env.production` 配置 `VITE_MEDIA_ORIGIN` 为主站根地址**（无尾部斜杠），构建后前端会把 `/upload/` 资源指向 Halo。
-
-#### 其它说明
-
-- Nginx 反代示例见下文「Nginx 参考配置」（API **`/plugins/dishes/public/`**；附件通过 `VITE_MEDIA_ORIGIN` 指到主站）。
-- 插件后台「前台域名白名单」仍用于服务端校验请求来源。
-
-### 场景 C：子路径部署（如 `https://menu.example.com/dishes/`）
-
-`web-frontend/.env.production`：
-
-```env
-VITE_ASSET_BASE=/dishes/
-VITE_PUBLIC_BASE=/dishes/
-```
-
-- `VITE_ASSET_BASE` 与 `VITE_PUBLIC_BASE` 必须以 `/` 开头并以 `/` 结尾，并与 Nginx 中前台子路径一致。
-- API 仍须在同一前台域名下反代 `/plugins/dishes/public/` 到 Halo。
-
----
-
-## 编译与构建
-
-### 插件整体编译（推荐）
-
-在项目根目录执行：
-
-```bash
-./gradlew clean build
-```
-
-Windows：
-
-```powershell
-.\gradlew.bat clean build
-```
-
-- 会统一构建后端与前端子模块，产出可安装插件包。
-- 插件包目录：`build/libs`
-
-### 何时单独构建前台
-
-- **插件内嵌、同域使用**：不必单独跑 `web-frontend` / `ui` 的构建命令，用上面的 Gradle 即可。
-- **独立域名或子路径单独托管前台**：在 `web-frontend` 目录额外执行：
-
-```bash
-pnpm install
-pnpm build
-```
-
-产物目录：`web-frontend/build/dist`
-
----
-
-## Nginx 参考配置
-
-独立前台部署**必须**通过反向代理：浏览器只访问前台域名，由 Nginx 将 **`/plugins/dishes/public/`** 转发到 Halo，避免跨域与 Cookie 问题。
-
-默认走 **`/plugins/dishes/public/...`**（与匿名 RBAC 一致）。独立静态页无 Thymeleaf CSRF 时，代码会在 POST 前先 GET **`/access/status`** 以触发 `XSRF-TOKEN`；若仍 403，请确认反代未丢弃 `Set-Cookie`。
-
-### 独立域名（根路径）示例
-
-```nginx
-server {
-    listen 80;
-    server_name menu.example.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name menu.example.com;
-
-    # 前台静态文件目录（替换为你的实际路径）
-    root /var/www/dishes-frontend;
-    index index.html;
-
-    # SPA 路由回退
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # 代理插件公共 API 到 Halo 主站
-    location /plugins/dishes/public/ {
-        proxy_pass https://blog.example.com/plugins/dishes/public/;
-        proxy_http_version 1.1;
-        proxy_set_header Host blog.example.com;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
----
-
-## 验证与排错
-
-- 页面静态资源可正常加载（无 404）。
-- 浏览器网络面板中，API 请求路径为 `/plugins/dishes/public/...`（默认）。
-- API 请求返回 JSON（不是 HTML 登录页）。若出现 **`/login?authentication_required` 且 404**，多为误将 API 指到 **`/apis/plugins/...`** 且被 Halo 要求登录；请改回默认前缀并反代 **`/plugins/dishes/public/`**。若 POST **403**，检查 CSRF Cookie 是否被反代/浏览器拦截。
-- 若出现跨域报错，说明 API 仍指向了 Halo 绝对地址或未配置反代；应确保请求 URL 为前台域名下的上述路径。
-- 若你希望 API 走自定义前缀（如 `/dishes-api/`），可设置 `VITE_API_PREFIX` 并同步修改 Nginx `location`。
+**[https://avrinbai.cn/docs/dishes/](https://avrinbai.cn/docs/dishes/)**
 
 ## 许可证
 
