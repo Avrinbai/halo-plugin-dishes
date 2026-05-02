@@ -53,8 +53,8 @@
 
 <div align="center">
 
-<img src="./images/public-preview.png" alt="前台首页预览" title="前台首页" width="40%" />
-<img src="./images/public-preview-2.png" alt="前台点菜页预览" title="前台点菜页" width="40%" />
+<img src="./images/public-preview.png" alt="前台首页预览" title="前台首页" width="20%" />
+<img src="./images/public-preview-2.png" alt="前台点菜页预览" title="前台点菜页" width="20%" />
 
 </div>
 
