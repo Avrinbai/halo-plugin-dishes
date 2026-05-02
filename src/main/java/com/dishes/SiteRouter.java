@@ -22,8 +22,14 @@ public class SiteRouter {
 
     private static final String DEFAULT_PUBLIC_PATH = "/dishes";
     private static final String DEFAULT_PUBLIC_LOGO_URL = "";
+    private static final String DEFAULT_SITE_TITLE = "家庭私厨";
+    private static final String DEFAULT_BRAND_TITLE = "家庭厨房";
+    private static final String DEFAULT_BRAND_SUBTITLE = "没写进菜谱的菜暂时还不会做，技能树还在缓慢增长...";
     private static final AtomicReference<String> CONFIGURED_PUBLIC_PATH = new AtomicReference<>("");
     private static final AtomicReference<String> CONFIGURED_PUBLIC_LOGO_URL = new AtomicReference<>("");
+    private static final AtomicReference<String> CONFIGURED_PUBLIC_SITE_TITLE = new AtomicReference<>("");
+    private static final AtomicReference<String> CONFIGURED_PUBLIC_BRAND_TITLE = new AtomicReference<>("");
+    private static final AtomicReference<String> CONFIGURED_PUBLIC_BRAND_SUBTITLE = new AtomicReference<>("");
     private final TemplateNameResolver templateNameResolver;
     private final DishesSettingsService settingsService;
 
@@ -41,6 +47,12 @@ public class SiteRouter {
     void initConfiguredPathCache() {
         updateConfiguredPublicPath(readConfiguredPublicPath());
         updateConfiguredPublicLogoUrl(readConfiguredPublicLogoUrl());
+        var spec = settingsService.safeReadSpec();
+        updateConfiguredPublicBranding(
+            spec.getPublicSiteTitle() == null ? "" : spec.getPublicSiteTitle(),
+            spec.getPublicBrandTitle() == null ? "" : spec.getPublicBrandTitle(),
+            spec.getPublicBrandSubtitle() == null ? "" : spec.getPublicBrandSubtitle()
+        );
     }
 
     public static void updateConfiguredPublicPath(String raw) {
@@ -56,13 +68,32 @@ public class SiteRouter {
         CONFIGURED_PUBLIC_LOGO_URL.set(raw.trim());
     }
 
+    public static void updateConfiguredPublicBranding(String siteTitle, String brandTitle, String brandSubtitle) {
+        CONFIGURED_PUBLIC_SITE_TITLE.set(siteTitle == null ? "" : siteTitle.trim());
+        CONFIGURED_PUBLIC_BRAND_TITLE.set(brandTitle == null ? "" : brandTitle.trim());
+        CONFIGURED_PUBLIC_BRAND_SUBTITLE.set(brandSubtitle == null ? "" : brandSubtitle.trim());
+    }
+
+    private static String effectiveWithDefault(String raw, String fallback) {
+        if (raw == null) {
+            return fallback;
+        }
+        var v = raw.trim();
+        return v.isEmpty() ? fallback : v;
+    }
+
     private reactor.core.publisher.Mono<ServerResponse> renderDishesPage(ServerRequest request) {
         var basePath = resolveBasePathByRequest(request.path());
         if (basePath == null) {
             return ServerResponse.notFound().build();
         }
         var model = new HashMap<String, Object>();
-        model.put("title", "家庭私厨");
+        var pageTitle = effectiveWithDefault(CONFIGURED_PUBLIC_SITE_TITLE.get(), DEFAULT_SITE_TITLE);
+        var brandTitle = effectiveWithDefault(CONFIGURED_PUBLIC_BRAND_TITLE.get(), DEFAULT_BRAND_TITLE);
+        var brandSubtitle = effectiveWithDefault(CONFIGURED_PUBLIC_BRAND_SUBTITLE.get(), DEFAULT_BRAND_SUBTITLE);
+        model.put("title", pageTitle);
+        model.put("brandTitle", brandTitle);
+        model.put("brandSubtitle", brandSubtitle);
         model.put("publicBasePath", basePath);
         model.put("publicLogoUrl", configuredPublicLogoUrl());
         return templateNameResolver

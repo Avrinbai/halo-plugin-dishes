@@ -64,8 +64,14 @@ public class PersistentDishesDomainService {
         var img = trimToNull(imageUrl);
         if (img != null) {
             var lower = img.toLowerCase(Locale.ROOT);
+            if (lower.startsWith("data:image/")) {
+                if (img.length() > 750_000) {
+                    throw new BusinessException(BusinessErrorCode.BAD_REQUEST, "内联图片过大（请缩短或使用附件链接）");
+                }
+                return;
+            }
             if (!(lower.startsWith("http://") || lower.startsWith("https://") || img.startsWith("/"))) {
-                throw new BusinessException(BusinessErrorCode.BAD_REQUEST, "图片 URL 需是 http(s) 链接或站内相对路径（以 / 开头）");
+                throw new BusinessException(BusinessErrorCode.BAD_REQUEST, "图片 URL 需是 http(s) 链接、站内相对路径（以 / 开头）或 data:image/* 内联图");
             }
         }
     }

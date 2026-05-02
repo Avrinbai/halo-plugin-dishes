@@ -111,6 +111,20 @@ public class DishesSettingsService {
         return raw == null ? "" : raw.trim();
     }
 
+    public String normalizePublicText(String raw, int maxLen) {
+        if (raw == null) {
+            return "";
+        }
+        var v = raw.trim();
+        if (v.isEmpty()) {
+            return "";
+        }
+        if (maxLen <= 0) {
+            return "";
+        }
+        return v.length() > maxLen ? v.substring(0, maxLen) : v;
+    }
+
     public String normalizeDomainWhitelist(String raw) {
         if (raw == null) return "";
         return raw
@@ -140,6 +154,9 @@ public class DishesSettingsService {
         spec.setAccessPassword("");
         spec.setPublicAccessUrl("");
         spec.setPublicLogoUrl("");
+        spec.setPublicSiteTitle("");
+        spec.setPublicBrandTitle("");
+        spec.setPublicBrandSubtitle("");
         spec.setPublicDomainWhitelist("");
         spec.setNotifyEnabled(false);
         spec.setNotifyChannel("");

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { apiGet, getApiErrorMessage } from '@/api/http'
 import { resolveMediaUrl } from '@/utils/mediaUrl'
+import { dishRecommendationLevel, stars } from '@/utils/recommendationDisplay'
+import { getPublicBrandSubtitle, getPublicBrandTitle } from '@/utils/publicBranding'
 import HomeOrderFab from '@/components/HomeOrderFab.vue'
 import headerLogoUrl from '@/assets/logo.png'
 
@@ -87,19 +89,6 @@ interface RecDish {
   recommendation_level?: number
 }
 
-interface RecPeriodRow {
-  meal_period: MealPeriodInfo
-  recommendations: RecDish[]
-  count: number
-  target_range: [number, number]
-  below_min: boolean
-}
-
-interface ComboData {
-  algorithm?: unknown
-  periods: RecPeriodRow[]
-}
-
 type PeriodCode = 'breakfast' | 'lunch' | 'dinner'
 
 function resolveHeaderAvatarUrlRaw() {
@@ -115,10 +104,12 @@ function resolveHeaderAvatarUrlRaw() {
 
 const headerAvatarUrl = computed(() => resolveMediaUrl(resolveHeaderAvatarUrlRaw()))
 
+const publicBrandTitle = computed(() => getPublicBrandTitle())
+const publicBrandSubtitle = computed(() => getPublicBrandSubtitle())
+
 const loading = ref(true)
 const error = ref<string | null>(null)
 const today = ref<TodayData | null>(null)
-const combo = ref<ComboData | null>(null)
 const recList = ref<RecDish[]>([])
 const recError = ref<string | null>(null)
 const recTip = ref<string | null>(null)
@@ -129,8 +120,6 @@ const recExhausted = ref(false)
 const selectedPeriod = ref<PeriodCode>('lunch')
 const boardKey = ref(0)
 const shuffling = ref(false)
-
-const boardOrders = ref<Record<string, number[]>>({})
 
 /** 当前推荐使用的餐段 code（与 selectedPeriod 保持一致，用于请求后端随机推荐） */
 const recPeriod = ref<PeriodCode>('lunch')
@@ -321,20 +310,6 @@ function isMealPeriodEnded(code: PeriodCode, at = new Date()): boolean {
 const mealClockTick = ref(0)
 let mealClockTimer: ReturnType<typeof setInterval> | undefined
 
-function initBoardOrders() {
-  const next: Record<string, number[]> = {}
-  for (const row of combo.value?.periods ?? []) {
-    next[row.meal_period.code] = row.recommendations.map((d) => d.dish_id)
-  }
-  boardOrders.value = next
-}
-
-watch(
-  () => combo.value?.periods,
-  () => initBoardOrders(),
-  { immediate: true, deep: true },
-)
-
 async function fetchRandomRecommendationsForCurrentPeriod() {
   if (!recPeriod.value) return
   shuffling.value = true
@@ -419,24 +394,6 @@ function onPeriodSelect(code: PeriodCode) {
   if (selectedPeriod.value === code) return
   selectedPeriod.value = code
   recReplacing.value = {}
-}
-
-/** 与点菜页 OrderView 一致的推荐星级展示（★ / ☆） */
-function stars(n: number) {
-  const c = Math.min(5, Math.max(1, Math.round(n)))
-  return '★'.repeat(c) + '☆'.repeat(5 - c)
-}
-
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n))
-}
-
-function dishRecLevel(d: RecDish): number {
-  const n = d.recommendation_level
-  if (n != null && Number.isFinite(n)) {
-    return clamp(Math.round(n), 1, 5)
-  }
-  return 3
 }
 
 const clockPeriod = computed((): PeriodCode => inferPeriodFromClock())
@@ -611,7 +568,6 @@ async function load() {
       DISHES_ACCESS_DENIED: '需要先完成访问验证',
     })
     today.value = null
-    combo.value = null
     recList.value = []
   } finally {
     loading.value = false
@@ -652,10 +608,10 @@ onUnmounted(() => {
         <div class="min-w-0 flex-1">
           
           <h1 class="text-[15px] font-semibold leading-tight tracking-tight text-slate-900">
-            家庭厨房
+            {{ publicBrandTitle }}
           </h1>
           <p class="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500">
-            没写进菜谱的菜暂时还不会做，技能树还在缓慢增长...
+            {{ publicBrandSubtitle }}
           </p>
         </div>
       </div>
@@ -1002,9 +958,9 @@ onUnmounted(() => {
                                 </p>
                                 <p
                                   class="shrink-0 text-[10px] leading-none tracking-wide text-amber-500"
-                                  :aria-label="`推荐 ${dishRecLevel(d)} 级`"
+                                  :aria-label="`推荐 ${dishRecommendationLevel(d)} 级`"
                                 >
-                                  {{ stars(dishRecLevel(d)) }}
+                                  {{ stars(dishRecommendationLevel(d)) }}
                                 </p>
                               </div>
                               <div class="mt-0.5 sm:mt-0">
@@ -1454,40 +1410,6 @@ onUnmounted(() => {
   border-radius: 0.5rem;
 }
 
-/* —— 推荐 · 左侧竖轨 —— */
-.home-rec-rail {
-  --rail-pad: 4px;
-  --rail-gap: 4px;
-}
-
-.home-rec-rail__glider {
-  left: var(--rail-pad);
-  right: var(--rail-pad);
-  height: calc(
-    (100% - 2 * var(--rail-pad) - (var(--seg-n) - 1) * var(--rail-gap)) / var(--seg-n)
-  );
-  top: calc(
-    var(--rail-pad) +
-      var(--rec-i) *
-        (
-          (100% - 2 * var(--rail-pad) - (var(--seg-n) - 1) * var(--rail-gap)) / var(--seg-n) +
-            var(--rail-gap)
-        )
-  );
-  transition: top 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.home-rec-rail__btn:focus-visible {
-  outline: 2px solid rgb(59 130 246 / 0.35);
-  outline-offset: 1px;
-  border-radius: 0.375rem;
-}
-
-/* 推荐列表：固定 3 行占位（与 .home-rec-row 的 h-11 + p-2、gap-1.5 一致）；多于 3 条可滚 */
-.home-rec-panel--three {
-  min-height: calc(3 * (2.75rem + 1rem) + 2 * 0.375rem + 2 * 0.125rem);
-}
-
 .home-rec-list {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -1521,47 +1443,6 @@ onUnmounted(() => {
 .home-board-swap-enter-from,
 .home-board-swap-leave-to {
   opacity: 0;
-}
-
-.rec-panel-next-enter-active,
-.rec-panel-next-leave-active,
-.rec-panel-prev-enter-active,
-.rec-panel-prev-leave-active {
-  transition:
-    opacity 0.24s cubic-bezier(0.25, 0.1, 0.25, 1),
-    transform 0.26s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-.rec-panel-next-enter-from {
-  opacity: 0;
-  transform: translate3d(0.35rem, 0, 0);
-}
-
-.rec-panel-next-leave-to {
-  opacity: 0;
-  transform: translate3d(-0.22rem, 0, 0);
-}
-
-.rec-panel-next-enter-to,
-.rec-panel-next-leave-from {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-
-.rec-panel-prev-enter-from {
-  opacity: 0;
-  transform: translate3d(-0.35rem, 0, 0);
-}
-
-.rec-panel-prev-leave-to {
-  opacity: 0;
-  transform: translate3d(0.22rem, 0, 0);
-}
-
-.rec-panel-prev-enter-to,
-.rec-panel-prev-leave-from {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
 }
 
 /* —— 预约：手风琴展开（grid 行高过渡） —— */
@@ -1598,24 +1479,23 @@ onUnmounted(() => {
   .home-period-swap-leave-active,
   .home-board-swap-enter-active,
   .home-board-swap-leave-active,
-  .rec-panel-next-enter-active,
-  .rec-panel-next-leave-active,
-  .rec-panel-prev-enter-active,
-  .rec-panel-prev-leave-active {
+  .home-rec-cards-enter-active,
+  .home-rec-cards-leave-active {
     transition-duration: 0.01ms;
   }
 
   .home-period-swap-enter-from,
   .home-period-swap-leave-to,
-  .rec-panel-next-enter-from,
-  .rec-panel-next-leave-to,
-  .rec-panel-prev-enter-from,
-  .rec-panel-prev-leave-to {
+  .home-rec-cards-enter-from,
+  .home-rec-cards-leave-to {
     transform: none;
   }
 
-  .home-period-seg__glider,
-  .home-rec-rail__glider {
+  .home-rec-cards-move {
+    transition-duration: 0.01ms;
+  }
+
+  .home-period-seg__glider {
     transition-duration: 0.01ms;
   }
 

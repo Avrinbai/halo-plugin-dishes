@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { apiGet, apiPost, getApiErrorMessage } from '@/api/http'
 import { resolveMediaUrl } from '@/utils/mediaUrl'
+import { stars } from '@/utils/recommendationDisplay'
+import { getPublicBrandSubtitle, getPublicBrandTitle } from '@/utils/publicBranding'
 import OrderSchedulingPromptModal from '@/components/OrderSchedulingPromptModal.vue'
 import OrderSubmitNotesModal from '@/components/OrderSubmitNotesModal.vue'
 import headerLogoUrl from '@/assets/logo.png'
@@ -113,6 +115,9 @@ function resolveHeaderAvatarUrlRaw() {
 
 const headerAvatarUrl = computed(() => resolveMediaUrl(resolveHeaderAvatarUrlRaw()))
 
+const publicBrandTitle = computed(() => getPublicBrandTitle())
+const publicBrandSubtitle = computed(() => getPublicBrandSubtitle())
+
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const submitting = ref(false)
@@ -192,6 +197,13 @@ const periodActiveIndex = computed(() => {
   const i = PERIODS.findIndex((p) => p.code === activeCode.value)
   return i >= 0 ? i : 0
 })
+
+/** 餐段角标用，避免模板里反复 Object.keys */
+const periodSelectionCounts = computed(() => ({
+  breakfast: Object.keys(selections.breakfast).length,
+  lunch: Object.keys(selections.lunch).length,
+  dinner: Object.keys(selections.dinner).length,
+}))
 
 const categories = computed(() => {
   const pid = currentPid.value
@@ -280,11 +292,6 @@ function decLine(id: number) {
   } else {
     line.qty = Math.max(1, Math.round((line.qty - 1) * 10) / 10)
   }
-}
-
-function stars(n: number) {
-  const c = Math.min(5, Math.max(1, Math.round(n)))
-  return '★'.repeat(c) + '☆'.repeat(5 - c)
 }
 
 async function bootstrap() {
@@ -452,9 +459,7 @@ watch(activeCode, () => {
       <header
         class="sticky top-0 z-20 shrink-0 bg-slate-50 supports-[backdrop-filter]:backdrop-blur-sm"
       >
-        <div
-          class="flex items-center gap-3 bg-white/95 px-4 py-3  backdrop-blur-sm"
-        >
+        <div class="flex items-center gap-3 bg-white/95 px-4 py-3 backdrop-blur-sm">
           <img
             :src="headerAvatarUrl"
             alt=""
@@ -466,10 +471,10 @@ watch(activeCode, () => {
 
           <div class="min-w-0 flex-1">
             <h1 class="text-[15px] font-semibold leading-tight tracking-tight text-slate-900">
-              家庭厨房
+              {{ publicBrandTitle }}
             </h1>
             <p class="mt-0.5 text-[11px] leading-snug text-slate-500">
-              没写进菜谱的菜暂时还不会做，技能树还在缓慢增长... 
+              {{ publicBrandSubtitle }}
             </p>
           </div>
         </div>
@@ -520,10 +525,10 @@ watch(activeCode, () => {
               >
                 <span class="relative z-[1]">{{ p.label }}</span>
                 <span
-                  v-if="Object.keys(selections[p.code]).length"
+                  v-if="periodSelectionCounts[p.code]"
                   class="absolute right-1 top-1 z-[2] flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-semibold leading-none text-white ring-2 ring-white"
                 >
-                  {{ Object.keys(selections[p.code]).length }}
+                  {{ periodSelectionCounts[p.code] }}
                 </span>
               </button>
             </div>
@@ -552,7 +557,7 @@ watch(activeCode, () => {
           <div
             v-for="n in 6"
             :key="n"
-            class="flex gap-3 rounded-lg border border-slate-100 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_2px_6px_rgba(15,23,42,0.03)]"
+            class="flex gap-3 rounded-lg border border-slate-100 bg-white p-2.5 shadow-sm"
           >
             <div class="h-14 w-14 shrink-0 animate-pulse rounded-md bg-slate-100 ring-1 ring-slate-200/50 shadow-[0_1px_4px_rgba(15,23,42,0.05)]" />
             <div class="min-w-0 flex-1 space-y-2 py-0.5">
@@ -653,19 +658,19 @@ watch(activeCode, () => {
                 >
                   <button
                     type="button"
-                    class="order-dish-row flex w-full gap-3 rounded-lg border p-2.5 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04),0_2px_6px_rgba(15,23,42,0.03)] transition-[border-color,background-color,box-shadow] duration-150"
+                    class="order-dish-row flex w-full gap-3 rounded-lg border p-2.5 text-left shadow-sm transition-[border-color,background-color,box-shadow] duration-150"
                     :class="
                       isSelected(d.id)
-                        ? 'border-blue-200/90 bg-blue-50/40 shadow-[0_1px_3px_rgba(59,130,246,0.07),0_4px_16px_-4px_rgba(59,130,246,0.14)]'
-                        : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50/80 hover:shadow-[0_2px_10px_-2px_rgba(15,23,42,0.07)]'
+                        ? 'border-blue-200/90 bg-blue-50/40 shadow-[0_2px_10px_rgba(59,130,246,0.12)]'
+                        : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50/80 hover:shadow-md'
                     "
                     @click="toggleDish(d)"
                   >
                     <div
-                      class="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-slate-100 ring-1 ring-slate-200/60 shadow-[0_1px_4px_rgba(15,23,42,0.06),inset_0_0_0_1px_rgba(255,255,255,0.45)] transition-[box-shadow,ring-color] duration-150"
+                      class="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-slate-100 ring-1 ring-slate-200/60 shadow-sm transition-[box-shadow,ring-color] duration-150"
                       :class="
                         isSelected(d.id)
-                          ? 'ring-blue-200/70 shadow-[0_2px_10px_rgba(59,130,246,0.2),0_0_20px_rgba(59,130,246,0.12),inset_0_0_0_1px_rgba(255,255,255,0.5)]'
+                          ? 'ring-blue-200/70 shadow-[0_2px_8px_rgba(59,130,246,0.18)]'
                           : ''
                       "
                     >

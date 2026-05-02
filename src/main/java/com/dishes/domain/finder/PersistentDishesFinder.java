@@ -107,6 +107,16 @@ public class PersistentDishesFinder {
         return listAll(MealOrder.class);
     }
 
+    public List<DishCategory> listAllDishCategoryExtensions() {
+        extensionSchemeRegistry.ensureRegistered();
+        return listAll(DishCategory.class);
+    }
+
+    public List<Dish> listAllDishExtensions() {
+        extensionSchemeRegistry.ensureRegistered();
+        return listAll(Dish.class);
+    }
+
     public MealOrder findMealOrderByDateAndPeriod(LocalDate date, String periodCode) {
         extensionSchemeRegistry.ensureRegistered();
         for (var ext : listMealOrders()) {

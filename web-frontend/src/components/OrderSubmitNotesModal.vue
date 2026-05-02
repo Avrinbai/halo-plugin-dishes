@@ -263,7 +263,7 @@ onUnmounted(() => {
                     提交成功
                   </p>
                   <p class="max-w-[16rem] text-sm leading-relaxed text-slate-500">
-                    已记好这一餐，正在带你回首页…
+                    已通知厨师长，正在带你回首页…
                   </p>
                 </div>
               </Transition>

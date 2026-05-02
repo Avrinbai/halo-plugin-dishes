@@ -10,12 +10,7 @@ import run.halo.app.plugin.BasePlugin;
 import run.halo.app.plugin.PluginContext;
 
 /**
- * <p>Plugin main class to manage the lifecycle of the plugin.</p>
- * <p>This class must be public and have a public constructor.</p>
- * <p>Only one main class extending {@link BasePlugin} is allowed per plugin.</p>
- *
- * @author bai
- * @since 1.0.0
+ * 插件主类，管理插件的生命周期。
  */
 @Component
 public class DishesPlugin extends BasePlugin {
@@ -36,7 +31,6 @@ public class DishesPlugin extends BasePlugin {
         extensionSchemeRegistry.ensureRegistered();
         log.info("Extension schemes and indexes registered successfully in DishesPlugin.start().");
 
-        // Fail fast: if index table is not visible to client here, plugin should not be marked as started.
         client.listAll(com.dishes.extension.DishCategory.class, ListOptions.builder().build(), org.springframework.data.domain.Sort.by("metadata.name"))
             .take(1)
             .collectList()

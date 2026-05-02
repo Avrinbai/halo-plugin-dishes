@@ -708,7 +708,7 @@ watch(
               <table class=":uno: min-w-full table-fixed border-collapse">
                 <colgroup>
                   <col class=":uno: w-12" />
-                  <col class=":uno: w-24" />
+                  <col class=":uno: min-w-[14rem] w-56" />
                   <col class=":uno: w-24" />
                   <col class=":uno: w-30" />
                   <col class=":uno: w-42" />
@@ -738,18 +738,12 @@ watch(
                       <input :checked="isChecked(d)" type="checkbox" @change="toggleDishSelection(d)" />
                     </td>
                     <td class=":uno: px-3 py-3">
-                      <div class=":uno: min-w-0 flex items-center gap-2">
-                        <img
-                          v-if="d.imageUrl"
-                          :src="dishThumbSrc(d.imageUrl)"
-                          :alt="d.name"
-                          class=":uno: h-9 w-9 rounded object-cover"
-                        />
-                        <div
-                          v-else
-                          class=":uno: h-9 w-9 flex items-center justify-center rounded bg-gray-100 text-xs text-gray-500 font-medium"
-                        >
-                          {{ d.name.slice(0, 1) }}
+                      <div class=":uno: min-w-0 flex items-center gap-3">
+                        <div v-if="d.imageUrl" class="dish-thumb">
+                          <img class="dish-thumb__img" :src="dishThumbSrc(d.imageUrl)" :alt="d.name" loading="lazy" />
+                        </div>
+                        <div v-else class="dish-thumb dish-thumb--placeholder" aria-hidden="true">
+                          <span class="dish-thumb__letter">{{ d.name.slice(0, 1) }}</span>
                         </div>
                         <div class=":uno: min-w-0">
                           <p class=":uno: truncate text-sm text-gray-800 font-medium">{{ d.name }}</p>
@@ -845,5 +839,37 @@ watch(
 
 .op-btn {
   border-radius: 4px;
+}
+
+.dish-thumb {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgb(244 244 245);
+  border: 1px solid rgb(228 228 231);
+  box-sizing: border-box;
+}
+
+.dish-thumb__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.dish-thumb--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dish-thumb__letter {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(113 113 122);
+  line-height: 1;
 }
 </style>

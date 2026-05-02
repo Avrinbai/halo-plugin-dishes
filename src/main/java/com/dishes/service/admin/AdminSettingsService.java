@@ -28,6 +28,9 @@ public class AdminSettingsService {
         String accessPassword,
         String publicAccessUrl,
         String publicLogoUrl,
+        String publicSiteTitle,
+        String publicBrandTitle,
+        String publicBrandSubtitle,
         String publicDomainWhitelist,
         Boolean notifyEnabled,
         String notifyChannel,
@@ -37,11 +40,22 @@ public class AdminSettingsService {
     ) {
         var ext = settingsService.getOrInitSettings();
         var spec = ext.getSpec();
-        if (accessMode != null || accessPassword != null || publicAccessUrl != null || publicLogoUrl != null || publicDomainWhitelist != null) {
+        if (accessMode != null || accessPassword != null || publicAccessUrl != null || publicLogoUrl != null
+            || publicSiteTitle != null || publicBrandTitle != null || publicBrandSubtitle != null || publicDomainWhitelist != null) {
             spec.setAccessMode(settingsService.normalizeAccessMode(accessMode));
             spec.setAccessPassword(accessPassword == null ? "" : accessPassword.trim());
             spec.setPublicAccessUrl(settingsService.normalizePublicAccessUrl(publicAccessUrl));
             spec.setPublicLogoUrl(settingsService.normalizeLogoUrl(publicLogoUrl));
+           
+            if (publicSiteTitle != null) {
+                spec.setPublicSiteTitle(settingsService.normalizePublicText(publicSiteTitle, 80));
+            }
+            if (publicBrandTitle != null) {
+                spec.setPublicBrandTitle(settingsService.normalizePublicText(publicBrandTitle, 60));
+            }
+            if (publicBrandSubtitle != null) {
+                spec.setPublicBrandSubtitle(settingsService.normalizePublicText(publicBrandSubtitle, 400));
+            }
             spec.setPublicDomainWhitelist(settingsService.normalizeDomainWhitelist(publicDomainWhitelist));
             syncSiteRouterCache(spec);
         }
@@ -61,5 +75,6 @@ public class AdminSettingsService {
     private void syncSiteRouterCache(DishesSettings.Spec spec) {
         SiteRouter.updateConfiguredPublicPath(spec.getPublicAccessUrl());
         SiteRouter.updateConfiguredPublicLogoUrl(spec.getPublicLogoUrl());
+        SiteRouter.updateConfiguredPublicBranding(spec.getPublicSiteTitle(), spec.getPublicBrandTitle(), spec.getPublicBrandSubtitle());
     }
 }

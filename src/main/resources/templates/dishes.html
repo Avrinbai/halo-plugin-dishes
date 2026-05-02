@@ -24,7 +24,12 @@
     <title th:text="${title} ?: '家庭私厨'">家庭私厨</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div
+      id="app"
+      th:data-dishes-site-title="${title}"
+      th:data-dishes-brand-title="${brandTitle}"
+      th:data-dishes-brand-subtitle="${brandSubtitle}"
+    ></div>
     <script th:if="${_csrf != null}">
       window.__DISHES_CSRF__ = {
         headerName: '[[${_csrf.headerName}]]',
